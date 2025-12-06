@@ -1,157 +1,54 @@
-cat > docs/index.html << 'EOF'
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI股票分析系统 - 港股美股AI分析</title>
+    <title>AI股票分析系統 - 港股美股分析</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <style>
-        :root {
-            --primary-color: #667eea;
-            --secondary-color: #764ba2;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f8f9fa;
-        }
-        
-        .navbar {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-        }
-        
-        .card {
-            border: none;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
-        
-        .card-header {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-            color: white;
-            border-radius: 10px 10px 0 0 !important;
-            padding: 15px 20px;
-        }
-        
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-            border: none;
-            transition: transform 0.3s ease;
-        }
-        
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-        
-        .stock-card {
-            text-align: center;
-            padding: 20px;
-            border-radius: 10px;
-            background: white;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            margin: 10px 0;
-        }
-        
-        .signal-card {
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            border-left: 4px solid;
-        }
-        
-        .signal-buy {
-            border-left-color: #28a745;
-            background: linear-gradient(to right, rgba(40, 167, 69, 0.1), transparent);
-        }
-        
-        .signal-sell {
-            border-left-color: #dc3545;
-            background: linear-gradient(to right, rgba(220, 53, 69, 0.1), transparent);
-        }
-        
-        footer {
-            margin-top: 50px;
-            padding: 20px 0;
-            background: #343a40;
-            color: white;
-        }
-        
-        #loading {
-            display: none;
-        }
-        
-        .spinner-border {
-            width: 3rem;
-            height: 3rem;
-        }
-        
-        .model-badge {
-            font-size: 0.8rem;
-            padding: 3px 8px;
-            margin-right: 5px;
-        }
-        
-        .price-up {
-            color: #28a745;
-        }
-        
-        .price-down {
-            color: #dc3545;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <!-- 导航栏 -->
-    <nav class="navbar navbar-expand-lg navbar-dark">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
             <a class="navbar-brand" href="#">
-                <i class="fas fa-chart-line"></i> AI股票分析系统
+                <i class="fas fa-chart-line"></i> AI股票分析系統
             </a>
-            <span class="navbar-text">
-                ARIMA + LSTM + 线性回归
-            </span>
         </div>
     </nav>
 
-    <!-- 主要内容 -->
     <div class="container mt-4">
         <!-- 控制面板 -->
         <div class="card mb-4">
             <div class="card-header">
-                <h4><i class="fas fa-cogs"></i> 分析设置</h4>
+                <h4><i class="fas fa-cogs"></i> 分析設置</h4>
             </div>
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-4">
                         <div class="mb-3">
-                            <label class="form-label">选择市场</label>
+                            <label class="form-label">選擇市場</label>
                             <select class="form-select" id="marketSelect">
-                                <option value="港股">港股市场</option>
-                                <option value="美股">美股市场</option>
+                                <option value="港股">港股市場</option>
+                                <option value="美股">美股市場</option>
                             </select>
                         </div>
                     </div>
                     <div class="col-md-4">
                         <div class="mb-3">
-                            <label class="form-label">选择股票</label>
+                            <label class="form-label">選擇股票</label>
                             <select class="form-select" id="stockSelect">
-                                <option value="0700.HK">腾讯控股 (0700.HK)</option>
+                                <option value="0700.HK">騰訊控股 (0700.HK)</option>
                                 <option value="9988.HK">阿里巴巴 (9988.HK)</option>
-                                <option value="3690.HK">美团-W (3690.HK)</option>
-                                <option value="AAPL">苹果公司 (AAPL)</option>
-                                <option value="MSFT">微软 (MSFT)</option>
-                                <option value="TSLA">特斯拉 (TSLA)</option>
+                                <option value="AAPL">蘋果公司 (AAPL)</option>
+                                <option value="MSFT">微軟 (MSFT)</option>
                             </select>
                         </div>
                     </div>
                     <div class="col-md-4">
                         <div class="mb-3">
-                            <label class="form-label">预测天数</label>
+                            <label class="form-label">預測天數</label>
                             <input type="number" class="form-control" id="forecastDays" value="30" min="1" max="90">
                         </div>
                     </div>
@@ -159,11 +56,11 @@ cat > docs/index.html << 'EOF'
                 <div class="row">
                     <div class="col-md-6">
                         <div class="mb-3">
-                            <label class="form-label">数据周期</label>
+                            <label class="form-label">數據周期</label>
                             <select class="form-select" id="periodSelect">
-                                <option value="1mo">1个月</option>
-                                <option value="3mo">3个月</option>
-                                <option value="6mo">6个月</option>
+                                <option value="1mo">1個月</option>
+                                <option value="3mo">3個月</option>
+                                <option value="6mo">6個月</option>
                                 <option value="1y" selected>1年</option>
                                 <option value="2y">2年</option>
                             </select>
@@ -171,8 +68,8 @@ cat > docs/index.html << 'EOF'
                     </div>
                     <div class="col-md-6">
                         <div class="d-grid gap-2">
-                            <button class="btn btn-primary btn-lg" onclick="simulateAnalysis()" id="analyzeBtn">
-                                <i class="fas fa-rocket"></i> 开始AI分析
+                            <button class="btn btn-primary btn-lg" onclick="analyzeStock()" id="analyzeBtn">
+                                <i class="fas fa-rocket"></i> 開始分析
                             </button>
                         </div>
                     </div>
@@ -180,19 +77,16 @@ cat > docs/index.html << 'EOF'
             </div>
         </div>
 
-        <!-- 加载动画 -->
-        <div id="loading" class="text-center">
+        <!-- 加載動畫 -->
+        <div id="loading" class="text-center" style="display: none;">
             <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">加载中...</span>
+                <span class="visually-hidden">加載中...</span>
             </div>
-            <p class="mt-2">AI正在分析中，请稍候...</p>
-            <div class="progress mt-3">
-                <div class="progress-bar progress-bar-striped progress-bar-animated" id="progressBar" style="width: 0%"></div>
-            </div>
+            <p class="mt-2">AI正在分析中，請稍候...</p>
         </div>
 
-        <!-- 分析结果 -->
-        <div id="results">
+        <!-- 分析結果 -->
+        <div id="results" style="display: none;">
             <!-- 股票信息 -->
             <div class="card mb-4">
                 <div class="card-header">
@@ -200,42 +94,39 @@ cat > docs/index.html << 'EOF'
                 </div>
                 <div class="card-body">
                     <div class="row" id="stockInfo">
-                        <!-- 动态加载股票信息 -->
+                        <!-- 動態加載股票信息 -->
                     </div>
                 </div>
             </div>
 
-            <!-- 交易信号 -->
+            <!-- 交易信號 -->
             <div class="card mb-4">
                 <div class="card-header">
-                    <h4><i class="fas fa-bullhorn"></i> AI交易信号</h4>
+                    <h4><i class="fas fa-bullhorn"></i> AI交易信號</h4>
                 </div>
                 <div class="card-body">
                     <div class="row" id="signals">
-                        <!-- 动态加载交易信号 -->
+                        <!-- 動態加載交易信號 -->
                     </div>
                 </div>
             </div>
 
-            <!-- 价格图表 -->
+            <!-- 價格圖表 -->
             <div class="card mb-4">
                 <div class="card-header">
-                    <h4><i class="fas fa-chart-line"></i> AI价格预测</h4>
-                    <span class="badge bg-primary model-badge">ARIMA</span>
-                    <span class="badge bg-success model-badge">LSTM</span>
-                    <span class="badge bg-info model-badge">线性回归</span>
+                    <h4><i class="fas fa-chart-line"></i> AI價格預測</h4>
                 </div>
                 <div class="card-body">
                     <div id="priceChart"></div>
                 </div>
             </div>
 
-            <!-- 技术指标 -->
+            <!-- 技術指標 -->
             <div class="row mb-4">
                 <div class="col-md-6">
                     <div class="card h-100">
                         <div class="card-header">
-                            <h5><i class="fas fa-chart-bar"></i> 布林带分析</h5>
+                            <h5><i class="fas fa-chart-bar"></i> 布林帶分析</h5>
                         </div>
                         <div class="card-body">
                             <div id="bbChart"></div>
@@ -245,7 +136,7 @@ cat > docs/index.html << 'EOF'
                 <div class="col-md-6">
                     <div class="card h-100">
                         <div class="card-header">
-                            <h5><i class="fas fa-wave-square"></i> ATR波动分析</h5>
+                            <h5><i class="fas fa-wave-square"></i> ATR波動分析</h5>
                         </div>
                         <div class="card-body">
                             <div id="atrChart"></div>
@@ -254,10 +145,10 @@ cat > docs/index.html << 'EOF'
                 </div>
             </div>
 
-            <!-- 模型比较 -->
+            <!-- 模型比較 -->
             <div class="card mb-4">
                 <div class="card-header">
-                    <h4><i class="fas fa-balance-scale"></i> AI模型预测比较</h4>
+                    <h4><i class="fas fa-balance-scale"></i> AI模型預測比較</h4>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
@@ -265,14 +156,14 @@ cat > docs/index.html << 'EOF'
                             <thead>
                                 <tr>
                                     <th>日期</th>
-                                    <th>线性回归预测</th>
-                                    <th>ARIMA预测</th>
-                                    <th>LSTM预测</th>
-                                    <th>平均预测</th>
+                                    <th>線性回歸預測</th>
+                                    <th>ARIMA預測</th>
+                                    <th>LSTM預測</th>
+                                    <th>平均預測</th>
                                 </tr>
                             </thead>
                             <tbody id="forecastBody">
-                                <!-- 动态加载预测数据 -->
+                                <!-- 動態加載預測數據 -->
                             </tbody>
                         </table>
                     </div>
@@ -281,523 +172,41 @@ cat > docs/index.html << 'EOF'
         </div>
     </div>
 
-    <!-- 页脚 -->
-    <footer class="text-center">
-        <div class="container">
-            <p>AI股票分析系统 &copy; 2024 - 使用ARIMA、LSTM、线性回归等AI模型进行股票分析</p>
-            <p>数据来源: Yahoo Finance | 更新时间: <span id="updateTime"></span></p>
-            <p class="mb-0">
-                <a href="https://github.com/BigTeaRice/stock-ai-analysis" class="text-white">
-                    <i class="fab fa-github"></i> GitHub项目地址
-                </a>
-            </p>
+    <footer class="bg-dark text-white mt-5 py-3">
+        <div class="container text-center">
+            <p>AI股票分析系統 &copy; 2024 - 使用ARIMA、LSTM、線性回歸等AI模型進行分析</p>
+            <p class="mb-0">數據來源: Yahoo Finance | 更新時間: <span id="updateTime"></span></p>
         </div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script>
-        // 初始化变量
-        let currentStock = '0700.HK';
-        let currentAnalysis = null;
+        // 更新時間
+        document.getElementById('updateTime').textContent = new Date().toLocaleString('zh-Hant');
         
-        // 页面加载完成
-        document.addEventListener('DOMContentLoaded', function() {
-            // 更新页面时间
-            document.getElementById('updateTime').textContent = new Date().toLocaleString('zh-CN');
-            
-            // 隐藏结果区域
-            document.getElementById('results').style.display = 'none';
-            document.getElementById('loading').style.display = 'none';
-            
-            // 为演示目的，显示一个示例图表
-            createDemoCharts();
-        });
-        
-        // 创建示例图表
-        function createDemoCharts() {
-            // 价格图表
-            const priceTrace = {
-                x: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-                y: [320, 340, 310, 380, 400, 420, 410, 430, 450, 440, 460, 480],
-                mode: 'lines',
-                name: '历史价格',
-                line: {color: '#667eea', width: 3}
-            };
-            
-            const forecastTrace = {
-                x: ['Dec', 'Jan', 'Feb'],
-                y: [480, 495, 510],
-                mode: 'lines',
-                name: 'AI预测',
-                line: {color: '#28a745', width: 2, dash: 'dash'}
-            };
-            
-            const priceData = [priceTrace, forecastTrace];
-            const priceLayout = {
-                title: '股票价格走势示例',
-                xaxis: {title: '月份'},
-                yaxis: {title: '价格'},
-                height: 400,
-                showlegend: true
-            };
-            
-            Plotly.newPlot('priceChart', priceData, priceLayout);
-            
-            // 布林带图表
-            const dates = [];
-            for (let i = 1; i <= 30; i++) {
-                dates.push(`Day ${i}`);
-            }
-            
-            const bbUpper = [];
-            const bbMiddle = [];
-            const bbLower = [];
-            const closePrices = [];
-            
-            let base = 100;
-            for (let i = 0; i < 30; i++) {
-                base += Math.random() * 4 - 2;
-                closePrices.push(base);
-                bbMiddle.push(base);
-                bbUpper.push(base + 10 + Math.random() * 5);
-                bbLower.push(base - 10 - Math.random() * 5);
-            }
-            
-            const bbTrace1 = {
-                x: dates,
-                y: bbUpper,
-                mode: 'lines',
-                name: '布林带上轨',
-                line: {color: 'gray', width: 1}
-            };
-            
-            const bbTrace2 = {
-                x: dates,
-                y: bbMiddle,
-                mode: 'lines',
-                name: '布林带中轨',
-                line: {color: 'black', width: 1}
-            };
-            
-            const bbTrace3 = {
-                x: dates,
-                y: bbLower,
-                mode: 'lines',
-                name: '布林带下轨',
-                line: {color: 'gray', width: 1},
-                fill: 'tonexty',
-                fillcolor: 'rgba(128, 128, 128, 0.1)'
-            };
-            
-            const bbTrace4 = {
-                x: dates,
-                y: closePrices,
-                mode: 'lines',
-                name: '收盘价',
-                line: {color: '#667eea', width: 2}
-            };
-            
-            const bbData = [bbTrace1, bbTrace2, bbTrace3, bbTrace4];
-            const bbLayout = {
-                title: '布林带分析示例',
-                xaxis: {title: '日期'},
-                yaxis: {title: '价格'},
-                height: 300,
-                showlegend: true
-            };
-            
-            Plotly.newPlot('bbChart', bbData, bbLayout);
-            
-            // ATR图表
-            const atrValues = [];
-            for (let i = 0; i < 30; i++) {
-                atrValues.push(5 + Math.random() * 3);
-            }
-            
-            const atrTrace = {
-                x: dates,
-                y: atrValues,
-                mode: 'lines',
-                name: 'ATR',
-                line: {color: 'orange', width: 2}
-            };
-            
-            const atrData = [atrTrace];
-            const atrLayout = {
-                title: 'ATR波动分析示例',
-                xaxis: {title: '日期'},
-                yaxis: {title: 'ATR值'},
-                height: 300,
-                showlegend: true
-            };
-            
-            Plotly.newPlot('atrChart', atrData, atrLayout);
-        }
-        
-        // 模拟分析过程
-        function simulateAnalysis() {
-            const symbol = document.getElementById('stockSelect').value;
-            const period = document.getElementById('periodSelect').value;
-            const forecastDays = document.getElementById('forecastDays').value;
-            
-            // 显示加载动画
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('results').style.display = 'none';
-            
-            // 禁用分析按钮
-            const analyzeBtn = document.getElementById('analyzeBtn');
-            analyzeBtn.disabled = true;
-            analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 分析中...';
-            
-            // 模拟进度条
-            let progress = 0;
-            const progressInterval = setInterval(() => {
-                progress += 10;
-                document.getElementById('progressBar').style.width = progress + '%';
-                
-                if (progress >= 100) {
-                    clearInterval(progressInterval);
-                    
-                    // 模拟分析完成
-                    setTimeout(() => {
-                        // 隐藏加载动画
-                        document.getElementById('loading').style.display = 'none';
-                        document.getElementById('results').style.display = 'block';
-                        
-                        // 恢复分析按钮
-                        analyzeBtn.disabled = false;
-                        analyzeBtn.innerHTML = '<i class="fas fa-rocket"></i> 开始AI分析';
-                        
-                        // 显示模拟结果
-                        showMockResults(symbol);
-                        
-                        // 更新图表
-                        updateCharts(symbol);
-                    }, 500);
-                }
-            }, 100);
-        }
-        
-        // 显示模拟结果
-        function showMockResults(symbol) {
-            // 随机生成股票信息
-            const price = 350 + Math.random() * 200;
-            const change = (Math.random() - 0.5) * 20;
-            const changePercent = (change / price * 100).toFixed(2);
-            const volume = Math.floor(Math.random() * 10000000) + 5000000;
-            const rsi = Math.floor(Math.random() * 30) + 30;
-            const atr = (Math.random() * 5 + 2).toFixed(2);
-            const volatility = (Math.random() * 20 + 10).toFixed(2);
-            
-            // 更新股票信息
-            const stockInfoHtml = `
-                <div class="col-md-3">
-                    <div class="stock-card">
-                        <h6>当前价格</h6>
-                        <div class="value h4">$${price.toFixed(2)}</div>
-                        <div class="${change >= 0 ? 'price-up' : 'price-down'}">
-                            ${change >= 0 ? '+' : ''}${change.toFixed(2)} 
-                            (${change >= 0 ? '+' : ''}${changePercent}%)
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="stock-card">
-                        <h6>波动率</h6>
-                        <div class="value h4">${volatility}%</div>
-                        <small>年化波动率</small>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="stock-card">
-                        <h6>RSI指标</h6>
-                        <div class="value h4 ${rsi < 30 ? 'price-up' : rsi > 70 ? 'price-down' : ''}">
-                            ${rsi.toFixed(2)}
-                        </div>
-                        <small>${rsi < 30 ? '超卖' : rsi > 70 ? '超买' : '正常'}</small>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="stock-card">
-                        <h6>成交量</h6>
-                        <div class="value h4">${(volume / 1000000).toFixed(2)}M</div>
-                        <small>ATR: ${atr}</small>
-                    </div>
-                </div>
-            `;
-            
-            document.getElementById('stockInfo').innerHTML = stockInfoHtml;
-            
-            // 生成交易信号
-            const signals = [];
-            
-            if (rsi < 35) {
-                signals.push({indicator: 'RSI', signal: '超卖', action: '买入机会'});
-            } else if (rsi > 65) {
-                signals.push({indicator: 'RSI', signal: '超买', action: '卖出机会'});
-            }
-            
-            if (change > 0 && volatility < 15) {
-                signals.push({indicator: '趋势', signal: '上升趋势', action: '持有'});
-            } else if (change < 0 && volatility > 25) {
-                signals.push({indicator: '波动', signal: '高波动下跌', action: '谨慎'});
-            }
-            
-            // 随机添加布林带信号
-            if (Math.random() > 0.5) {
-                signals.push({indicator: '布林带', signal: '价格触及中轨', action: '观望'});
-            }
-            
-            let signalsHtml = '';
-            if (signals.length === 0) {
-                signalsHtml = `
-                    <div class="col-12">
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle"></i> 暂无明确交易信号
-                        </div>
-                    </div>
-                `;
-            } else {
-                signals.forEach(signal => {
-                    const signalClass = signal.action.includes('买入') ? 'signal-buy' : 
-                                      signal.action.includes('卖出') ? 'signal-sell' : 'signal-neutral';
-                    
-                    signalsHtml += `
-                        <div class="col-md-6">
-                            <div class="signal-card ${signalClass}">
-                                <h6><i class="fas fa-chart-line"></i> ${signal.indicator}</h6>
-                                <p class="mb-1"><strong>信号:</strong> ${signal.signal}</p>
-                                <p class="mb-0"><strong>建议:</strong> ${signal.action}</p>
-                            </div>
-                        </div>
-                    `;
-                });
-            }
-            
-            document.getElementById('signals').innerHTML = signalsHtml;
-            
-            // 生成预测表格
-            const forecastDays = parseInt(document.getElementById('forecastDays').value);
-            let forecastHtml = '';
-            
-            for (let i = 1; i <= forecastDays; i++) {
-                if (i > 10) break; // 只显示前10天
-                
-                const date = new Date();
-                date.setDate(date.getDate() + i);
-                const dateStr = date.toISOString().split('T')[0];
-                
-                const lr = price + (i * 2) + (Math.random() - 0.5) * 10;
-                const arima = price + (i * 1.5) + (Math.random() - 0.5) * 8;
-                const lstm = price + (i * 2.5) + (Math.random() - 0.5) * 12;
-                const avg = (lr + arima + lstm) / 3;
-                
-                forecastHtml += `
-                    <tr>
-                        <td>${dateStr}</td>
-                        <td>$${lr.toFixed(2)}</td>
-                        <td>$${arima.toFixed(2)}</td>
-                        <td>$${lstm.toFixed(2)}</td>
-                        <td><strong>$${avg.toFixed(2)}</strong></td>
-                    </tr>
-                `;
-            }
-            
-            document.getElementById('forecastBody').innerHTML = forecastHtml;
-        }
-        
-        // 更新图表
-        function updateCharts(symbol) {
-            // 生成模拟数据
-            const dates = [];
-            const prices = [];
-            const forecastDates = [];
-            const lrPredictions = [];
-            const arimaPredictions = [];
-            const lstmPredictions = [];
-            
-            // 历史数据（过去30天）
-            let price = 350 + Math.random() * 50;
-            for (let i = 30; i >= 1; i--) {
-                const date = new Date();
-                date.setDate(date.getDate() - i);
-                dates.push(date.toISOString().split('T')[0]);
-                
-                price += (Math.random() - 0.5) * 10;
-                prices.push(price);
-            }
-            
-            // 预测数据（未来30天）
-            const forecastDays = parseInt(document.getElementById('forecastDays').value);
-            let lastPrice = prices[prices.length - 1];
-            
-            for (let i = 1; i <= forecastDays; i++) {
-                const date = new Date();
-                date.setDate(date.getDate() + i);
-                forecastDates.push(date.toISOString().split('T')[0]);
-                
-                lrPredictions.push(lastPrice + (i * 1.5) + (Math.random() - 0.5) * 5);
-                arimaPredictions.push(lastPrice + (i * 1.2) + (Math.random() - 0.5) * 4);
-                lstmPredictions.push(lastPrice + (i * 1.8) + (Math.random() - 0.5) * 6);
-            }
-            
-            // 更新价格图表
-            const priceTrace = {
-                x: dates,
-                y: prices,
-                mode: 'lines',
-                name: '历史价格',
-                line: {color: '#667eea', width: 3}
-            };
-            
-            const lrTrace = {
-                x: forecastDates,
-                y: lrPredictions,
-                mode: 'lines',
-                name: '线性回归预测',
-                line: {color: '#17a2b8', width: 2, dash: 'dash'}
-            };
-            
-            const arimaTrace = {
-                x: forecastDates,
-                y: arimaPredictions,
-                mode: 'lines',
-                name: 'ARIMA预测',
-                line: {color: '#28a745', width: 2, dash: 'dash'}
-            };
-            
-            const lstmTrace = {
-                x: forecastDates,
-                y: lstmPredictions,
-                mode: 'lines',
-                name: 'LSTM预测',
-                line: {color: '#dc3545', width: 2, dash: 'dash'}
-            };
-            
-            const priceData = [priceTrace, lrTrace, arimaTrace, lstmTrace];
-            const priceLayout = {
-                title: `${symbol} 价格预测`,
-                xaxis: {title: '日期'},
-                yaxis: {title: '价格'},
-                height: 400,
-                showlegend: true
-            };
-            
-            Plotly.newPlot('priceChart', priceData, priceLayout);
-            
-            // 更新布林带图表
-            const bbUpper = [];
-            const bbMiddle = [];
-            const bbLower = [];
-            
-            for (let i = 0; i < prices.length; i++) {
-                bbMiddle.push(prices[i]);
-                bbUpper.push(prices[i] + 15 + Math.random() * 5);
-                bbLower.push(prices[i] - 15 - Math.random() * 5);
-            }
-            
-            const bbTrace1 = {
-                x: dates,
-                y: bbUpper,
-                mode: 'lines',
-                name: '布林带上轨',
-                line: {color: 'gray', width: 1}
-            };
-            
-            const bbTrace2 = {
-                x: dates,
-                y: bbMiddle,
-                mode: 'lines',
-                name: '布林带中轨',
-                line: {color: 'black', width: 1}
-            };
-            
-            const bbTrace3 = {
-                x: dates,
-                y: bbLower,
-                mode: 'lines',
-                name: '布林带下轨',
-                line: {color: 'gray', width: 1},
-                fill: 'tonexty',
-                fillcolor: 'rgba(128, 128, 128, 0.1)'
-            };
-            
-            const bbTrace4 = {
-                x: dates,
-                y: prices,
-                mode: 'lines',
-                name: '收盘价',
-                line: {color: '#667eea', width: 2}
-            };
-            
-            const bbData = [bbTrace1, bbTrace2, bbTrace3, bbTrace4];
-            const bbLayout = {
-                title: '布林带分析',
-                xaxis: {title: '日期'},
-                yaxis: {title: '价格'},
-                height: 300,
-                showlegend: true
-            };
-            
-            Plotly.newPlot('bbChart', bbData, bbLayout);
-            
-            // 更新ATR图表
-            const atrValues = [];
-            for (let i = 0; i < prices.length; i++) {
-                atrValues.push(3 + Math.random() * 4);
-            }
-            
-            const atrTrace = {
-                x: dates,
-                y: atrValues,
-                mode: 'lines',
-                name: 'ATR',
-                line: {color: 'orange', width: 2}
-            };
-            
-            const atrData = [atrTrace];
-            const atrLayout = {
-                title: 'ATR波动分析',
-                xaxis: {title: '日期'},
-                yaxis: {title: 'ATR值'},
-                height: 300,
-                showlegend: true
-            };
-            
-            Plotly.newPlot('atrChart', atrData, atrLayout);
-        }
-        
-        // 市场选择变化时更新股票列表
+        // 市場選擇變化時更新股票列表
         document.getElementById('marketSelect').addEventListener('change', function() {
-            const market = this.value;
-            const stockSelect = document.getElementById('stockSelect');
-            
-            let stocks = [];
-            if (market === '港股') {
-                stocks = [
-                    {value: '0700.HK', text: '腾讯控股 (0700.HK)'},
-                    {value: '9988.HK', text: '阿里巴巴 (9988.HK)'},
-                    {value: '3690.HK', text: '美团-W (3690.HK)'},
-                    {value: '1810.HK', text: '小米集团 (1810.HK)'}
-                ];
-            } else {
-                stocks = [
-                    {value: 'AAPL', text: '苹果公司 (AAPL)'},
-                    {value: 'MSFT', text: '微软 (MSFT)'},
-                    {value: 'TSLA', text: '特斯拉 (TSLA)'},
-                    {value: 'GOOGL', text: '谷歌 (GOOGL)'}
-                ];
-            }
-            
-            stockSelect.innerHTML = '';
-            stocks.forEach(stock => {
-                const option = document.createElement('option');
-                option.value = stock.value;
-                option.textContent = stock.text;
-                stockSelect.appendChild(option);
-            });
+            updateStockList(this.value);
         });
+        
+        function updateStockList(market) {
+            fetch(`/stocks?market=${market}`)
+                .then(response => response.json())
+                .then(stocks => {
+                    const select = document.getElementById('stockSelect');
+                    select.innerHTML = '';
+                    stocks.forEach(stock => {
+                        const option = document.createElement('option');
+                        option.value = stock;
+                        option.textContent = stock;
+                        select.appendChild(option);
+                    });
+                });
+        }
+        
+        // 初始化股票列表
+        updateStockList('港股');
     </script>
 </body>
 </html>
