@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>本地量化股票分析</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .input-group {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        input {
+            padding: 10px;
+            width: 200px;
+            border: 1px solid #ccc;
+            border-radius: 4px 0 0 4px;
+            font-size: 16px;
+        }
+        button {
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .error {
+            color: red;
+            text-align: center;
+            margin-top: 10px;
+        }
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            display: none;
+        }
+        .loading {
+            text-align: center;
+            color: #666;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>📊 AI 量化股票分析工具</h1>
+    <div class="input-group">
+        <input type="text" id="symbol" placeholder="輸入股票代碼 (例如: 0700.HK)" value="0700.HK">
+        <button onclick="analyzeStock()">分析</button>
+    </div>
+    <div class="error" id="error"></div>
+    <div class="loading" id="loading">正在加載數據...</div>
+    <div class="result" id="result"></div>
+</div>
+
+<script>
+    // 請將你的 API Key 填寫在這裡
+    // Alpha Vantage API Key (免費版, 搜尋 alphavantage 可得)
+    const ALPHA_VANTAGE_API_KEY = 'YOUR_ALPHAVANTAGE_API_KEY'; 
+    
+    // Qwen API Key (如果你使用 SiliconFlow)
+    const QWEN_API_KEY = 'YOUR_QWEN_API_KEY';
+    const QWEN_API_URL = 'https://api.siliconflow.cn/v1/chat/completions';
+
+    async function analyzeStock() {
+        const symbol = document.getElementById('symbol').value.trim();
+        const errorDiv = document.getElementById('error');
+        const resultDiv = document.getElementById('result');
+        const loadingDiv = document.getElementById('loading');
+
+        errorDiv.style.display = 'none';
+        resultDiv.style.display = 'none';
+        loadingDiv.style.display = 'block';
+
+        if (!symbol) {
+            showError('請輸入股票代碼');
+            return;
+        }
+
+        try {
+            // 1. 獲取股票數據 (使用 Alpha Vantage)
+            const stockData = await fetchStockData(symbol);
+            if (!stockData) {
+                showError('無法獲取股票數據，請檢查代碼或網絡');
+                return;
+            }
+
+            // 2. 獲取 AI 分析 (可選, 如果有 QWEN_API_KEY)
+            let aiAnalysis = '';
+            if (QWEN_API_KEY !== 'YOUR_QWEN_API_KEY') {
+                aiAnalysis = await getAIAnalysis(stockData, symbol);
+            } else {
+                aiAnalysis = '<p><strong>AI 分析:</strong> 請在代碼中填寫 QWEN_API_KEY 以啟用 AI 功能。</p>';
+            }
+
+            // 3. 顯示結果
+            displayResult(symbol, stockData, aiAnalysis);
+
+        } catch (error) {
+            console.error('分析失敗:', error);
+            showError('分析過程中發生錯誤，請查看控制台');
+        } finally {
+            loadingDiv.style.display = 'none';
+        }
+    }
+
+    async function fetchStockData(symbol) {
+        // 注意: Alpha Vantage 的港股代碼通常需要 .HK 後綴
+        const url = `https://www.alphavantage.co/query?function=TIME_SERIES_D

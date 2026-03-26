@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Stock AI 分析系统 (模拟版)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Arial', sans-serif;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        .btn-primary {
+            background: linear-gradient(to right, #4facfe, #00f2fe);
+            color: white;
+            border: none;
+            padding: 12px 32px;
+            border-radius: 50px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .btn-primary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(79, 172, 254, 0.5);
+        }
+        .stat-card {
+            border-left: 4px solid #667eea;
+        }
+        .stat-card-yellow {
+            border-left: 4px solid #fbbf24;
+        }
+        .stat-card-green {
+            border-left: 4px solid #10b981;
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+    <div class="container mx-auto px-4 py-12">
+        <!-- Header -->
+        <header class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-white mb-2">📈 Stock AI 智能分析系统</h1>
+            <p class="text-gray-200">输入股票代码，获取 AI 驱动的 Alpha 因子分析与走势预测</p>
+        </header>
+
+        <!-- Input Section -->
+        <div class="max-w-3xl mx-auto mb-12">
+            <div class="flex flex-col md:flex-row gap-4">
+                <input type="text" id="stockCode" placeholder="股票代码 (例如: 0700.HK)" 
+                       class="flex-1 p-4 rounded-lg shadow focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <button id="analyzeBtn" class="btn-primary px-8">
+                    <span id="btnText">开始 AI 分析</span>
+                    <span id="loadingSpinner" class="hidden">处理中...</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Metrics Cards -->
+        <div id="metrics" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            <!-- 这里会通过 JS 动态填充数据 -->
+        </div>
+
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+            <div class="card p-6">
+                <h3 class="text-xl font-semibold mb-4">历史走势与技术指标</h3>
+                <div id="klineChart" class="w-full h-80"></div>
+            </div>
+            <div class="card p-6">
+                <h3 class="text-xl font-semibold mb-4">AI 未来走势预测</h3>
+                <div id="forecastChart" class="w-full h-80"></div>
+            </div>
+        </div>
+
+        <!-- Alpha Factor Analysis -->
+        <div class="card p-6 mb-12">
+            <h3 class="text-xl font-semibold mb-4">Alpha 因子综合评分</h3>
+            <div class="flex flex-col md:flex-row items-center justify-between">
+                <div id="factorChart" class="w-full md:w-1/2 h-64 mb-4 md:mb-0"></div>
+                <div class="w-full md:w-1/2 ml-0 md:ml-8">
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <span class="font-medium">动量因子:</span>
+                            <span class="text-green-600 font-bold">+15.2%</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="font-medium">波动率因子:</span>
+                            <span class="text-yellow-600 font-bold">中性 (1.2)</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="font-medium">流动性因子:</span>
+                            <span class="text-green-600 font-bold">高 (成交量 +20%)</span>
+                        </div>
+                        <div class="flex items-center justify-between pt-2 border-t">
+                            <span class="font-bold text-lg">综合评分:</span>
+                            <span class="text-2xl font-bold text-red-600">85/100</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Log Section -->
+        <div class="card p-6">
+            <h3 class="text-xl font-semibold mb-4">操作日志</h3>
+            <div id="logList" class="space-y-2 text-sm text-gray-600">
+                <div class="text-center text-gray-400">等待分析...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            const stockCodeInput = document.getElementById('stockCode');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const btnText = document.getElementById('btnText');
+            const logList = document.getElementById('logList');
+            const metricsContainer = document.getElementById('metrics');
+
+            // 模拟的 AI 分析数据
+            function getMockData() {
+                return {
+                    "code": stockCodeInput.value || "0700.HK",
+                    "current_price": 350.50,
+                    "volatility": 1.5,
+                    "rsi": 65,
+                    "volume": 1200000,
+                    "kline_data": {
+                        "dates": ["2023-10-01", "2023-10-02", "2023-10-03", "2023-10-04", "2023-10-05"],
+                        "opens": [340, 342, 345, 348, 350],
+                        "closes": [342, 345, 348, 350, 352],
+                        "highs": [345, 348, 350, 352, 355],
+                        "lows": [338, 340, 343, 346, 348],
+                        "volumes": [800000, 900000, 1000000, 1100000, 1200000]
+                    },
+                    "forecast_data": {
+                        "dates": ["Day 1", "Day 2", "Day 3", "Day 4", "Day 5"],
+                        "predictions": [355, 358, 362, 365, 368],
+                        "confidence": [0.8, 0.82, 0.85, 0.88, 0.90]
+                    },
+                    "alpha_factors": {
+                        "momentum": 85,
+                        "volatility": 60,
+                        "liquidity": 90,
+                        "value": 70,
+                        "quality": 80
+                    }
+                };
+            }
+
+            // 初始化图表
+            function initCharts(data) {
+                // K线图
+                kLineChart = echarts.init(document.getElementById('klineChart'));
+                kLineChart.setOption({
+                    tooltip: { trigger: 'axis' },
+                    xAxis: { data: data.kline_data.dates },
+                    yAxis: {},
+                    series: [{
+                        type: 'candlestick',
+                        data: data.kline_data.closes.map((close, i) => [
+                            data.kline_data.opens[i],
+                            close,
+                            data.kline_data.lows[i],
+                            data.kline_data.highs[i]
+                        ])
+                    }]
+                });
+
+                // 预测图
+                forecastChart = echarts.init(document.getElementById('forecastChart'));
+                forecastChart.setOption({
+                    tooltip: { trigger: 'axis' },
+                    xAxis: { data: data.forecast_data.dates },
+                    yAxis: {},
+                    series: [{
+                        type: 'line',
+                        data: data.forecast_data.predictions,
+                        smooth: true,
+                        areaStyle: {}
+                    }]
+                });
+
+                // 因子雷达图
+                factorChart = echarts.init(document.getElementById('factorChart'));
+                factorChart.setOption({
+                    radar: {
+                        indicator: [
+                            { name: '动量', max: 100 },
+                            { name: '波动率', max: 100 },
+                            { name: '流动性', max: 100 },
+                            { name: '价值', max: 100 },
+                            { name: '质量', max: 100 }
+                        ]
+                    },
+                    series: [{
+                        type: 'radar',
+                        data: [data.alpha_factors]
+                    }]
+                });
+            }
+
+            // 更新指标卡片
+            function updateMetrics(data) {
+                metricsContainer.innerHTML = `
+                    <div class="stat-card card p-6 text-center">
+                        <p class="text-sm text-gray-500">当前价格</p>
+                        <p class="text-2xl font-bold text-gray-900 mt-1">${data.current_price.toFixed(2)}</p>
+                    </div>
+                    <div class="stat-card-yellow card p-6 text-center">
+                        <p class="text-sm text-gray-500">波动率</p>
+                        <p class="text-2xl font-bold text-gray-900 mt-1">${data.volatility} σ</p>
+                    </div>
+                    <div class="stat-card-green card p-6 text-center">
+                        <p class="text-sm text-gray-500">成交量</p>
+                        <p class="text-2xl font-bold text-gray-900 mt-1">${data.volume.toLocaleString()}</p>
+                    </div>
+                `;
+            }
+
+            // 模拟分析流程
+            analyzeBtn.addEventListener('click', async function () {
+                const code = stockCodeInput.value.trim();
+                if (!code) {
+                    alert('请输入股票代码');
+                    return;
+                }
+
+                // 模拟加载状态
+                analyzeBtn.disabled = true;
+                btnText.classList.add('hidden');
+                loadingSpinner.classList.remove('hidden');
+
+                // 模拟网络延迟
+                await new Promise(resolve => setTimeout(resolve, 1500));
+
+                // 获取模拟数据
+                const data = getMockData();
+
+                // 更新界面
+                updateMetrics(data);
+                initCharts(data);
+
+                // 添加日志
+                logList.innerHTML = `
+                    <div class="flex justify-between">
+                        <span>分析完成: ${data.code}</span>
+                        <span class="text-gray-400 text-xs">${new Date().toLocaleTimeString()}</span>
+                    </div>
+                    <div class="text-sm text-green-600">AI 预测: 未来走势看涨 📈</div>
+                `;
+
+                // 恢复按钮状态
+                analyzeBtn.disabled = false;
+                btnText.classList.remove('hidden');
+                loadingSpinner.classList.add('hidden');
+            });
+        });
+    </script>
+</body>
+</html>
